@@ -111,6 +111,18 @@ function sigbro_auth_shortcode($attr) {
   return $msg;
 }
 
+function sigbro_welcome_page() {
+  $account = $_COOKIE["sigbro_auth_account"];
+  if ( $account == "" ) {
+    header('Location: /');
+    wp_die();
+  }
+
+  $msg = sprintf("<p style='text-align: center;'>Welcome, %s</p>", $account);
+  return $msg;
+}
+
 add_shortcode('sigbro-auth', 'sigbro_auth_shortcode');
+add_shortcode('sigbro-welcome', 'sigbro_welcome_page');
 
 ?>
