@@ -3,7 +3,7 @@
 /*
 Plugin Name: Sigbro Auth 2.0
 Plugin URI: https://www.nxter.org/sigbro
-Version: 0.1.0
+Version: 0.2.0
 Author: scor2k
 Description: Use Sigbro Mobile app to log in to the site
 License: MIT
@@ -14,12 +14,13 @@ session_start([
   'cookie_lifetime' => 600,
 ]);
 
-require_once 'utils.php'; 
+require_once 'utils.php';
 require_once 'phpqrcode.php';
 
 defined('ABSPATH') or die('No script kiddies please!');
 
-function sigbro_auth_shortcode($attr) {
+function sigbro_auth_shortcode($attr)
+{
 
   $this_is_new_qrcode = false;
 
@@ -111,18 +112,48 @@ function sigbro_auth_shortcode($attr) {
   return $msg;
 }
 
-function sigbro_welcome_page() {
+function sigbro_set_property($attr) {
   $account = $_COOKIE["sigbro_auth_account"];
+
   if ( $account == "" ) {
     header('Location: /');
     wp_die();
   }
 
-  $msg = sprintf("<p style='text-align: center;'>Welcome, %s</p>", $account);
+  $args = shortcode_atts( array(
+    'setter' => '',
+    'setter_publickey' => '',
+    'property' => 'sigbro',
+    'value' => 'silver',
+    'token' => ''
+  ), $attr );
+
+  $_setter = $args['setter'];
+  $_setter_publickey = $args['setter_publickey'];
+  $_property = $args['property'];
+  $_value = $args['value'];
+  $_token = $args['token'];
+
+  $_validate = sigbro_validate_account_property($account, $_property, $_setter, $_value);
+
+  if ( $_validate == true ) {
+    $msg = sprintf("<p style='text-align: center;'>Welcome, %s<br>Your account is valid!</p>", $account);
+  } else {
+    $prop_res = sigbro_set_account_property($account, $_property, $_setter_publickey, $_value, $_token);
+    if ( $prop_res == true ) {
+      $msg = sprintf("<p style='text-align: center;'>Welcome, %s<br>Your account is going to be valid soon!</p>", $account);
+    } else {
+      $msg = sprintf("<p style='text-align: center;'>Welcome, %s<br>Your need a Sigbro Blessing!</p>", $account);
+    }
+  }
+ 
   return $msg;
 }
 
 add_shortcode('sigbro-auth', 'sigbro_auth_shortcode');
-add_shortcode('sigbro-welcome', 'sigbro_welcome_page');
+
+
+// [sigbro-property setter="ARDOR-H2W5-VZAB-9XFZ-38885" property="sigbro" value="silver" token="qwerty123"]
+add_shortcode('sigbro-property', 'sigbro_set_property');
 
 ?>

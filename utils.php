@@ -1,4 +1,72 @@
 <?php 
+$sigbro_ardor_url = "https://random.api.nxter.org/tstardor";
+$sigbro_signer_url = "https://sigbro-signer.api.nxter.org/api/v1/sign/";
+
+
+// send transaction to the sign service
+function sigbro_send_tx_to_sign($unsigned_tx, $token) {
+    global $sigbro_signer_url;
+
+    $params = array(
+        'payload' => $unsigned_tx,
+        'sigbro_token' => $token,
+        'sigbro_network' => 'testnet',
+    );
+    $res = sigbro_send_post_json($sigbro_signer_url, $params, 5, $token);
+
+    if ( isset($res["status"]) && $res["status"] == "ok" ) {
+        return true;
+    } 
+    var_dump($res);
+
+    return false;
+}
+
+// set up the property for the AccountRS
+function sigbro_set_account_property($account, $property, $setter_publickey, $value, $token) {
+    global $sigbro_ardor_url;
+    $params = array(
+        'requestType' => 'setAccountProperty',
+        'chain' => 2,
+        'recipient' => $account,
+        'property' => $property, 
+        'value' => $value,
+        'publicKey' => $setter_publickey,
+        'feeNQT' => -1,
+        'deadline' => 15,
+        'broadcast' => false,
+    );
+
+    $res = sigbro_send_post($sigbro_ardor_url, $params, 3);
+
+    if ( isset($res["transactionJSON"]) ) {
+        // we might try to setup property we need
+        $sign_res = sigbro_send_tx_to_sign($res, $token);
+        return $sign_res;
+    }
+
+    // error was happened
+    return false;
+}
+
+// validate Account Property -> return True if valid
+function sigbro_validate_account_property($account, $property, $setter, $value) {
+    global $sigbro_ardor_url;
+
+    $params = array(
+        'requestType' => 'getAccountProperties',
+        'recipient' => $account,
+        'property' => $property, 
+        'setter' => $setter,
+    );
+
+    $res = sigbro_send_post($sigbro_ardor_url, $params, 3);
+
+    if ( $res["properties"] == $property && $res["value"] == $value ) {
+        return true;
+    }
+    return false;
+}
 
 // send POST request
 function sigbro_send_post($url, $params, $timeout = 3) {
@@ -10,18 +78,20 @@ function sigbro_send_post($url, $params, $timeout = 3) {
             'timeout' => $timeout,
         ),
     )));
-    return $res;
+    return json_decode( $res, true );
 }
 
 // send POST JSON request 
-function sigbro_send_post_json($url, $params, $timeout =3) {
+function sigbro_send_post_json($url, $params, $timeout=3, $token='anonymous') {
 	$options = array(
 		'http' => array(
 			'method'  => 'POST',
 			'content' => json_encode( $params ),
 			'header'=>  "Content-Type: application/json\r\n" .
 									"Accept: application/json\r\n" .
+									"X-Sigbro-Token: " . $token . "\r\n" .
 									"User-Agent: sigbro-auth2\r\n",
+
 			'timeout' => $timeout
 			)
 	);
