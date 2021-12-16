@@ -19,9 +19,8 @@ require_once 'phpqrcode.php';
 
 defined('ABSPATH') or die('No script kiddies please!');
 
-function sigbro_auth_shortcode($attr)
-{
 
+function sigbro_auth_shortcode($attr) {
   $this_is_new_qrcode = false;
 
   if  ( !isset($_SESSION["sigbro_auth_uuid"]) ) {
@@ -112,48 +111,53 @@ function sigbro_auth_shortcode($attr)
   return $msg;
 }
 
-function sigbro_set_property($attr) {
+function sigbro_validate_property($attr) {
   $account = $_COOKIE["sigbro_auth_account"];
-
-  if ( $account == "" ) {
-    header('Location: /');
-    wp_die();
-  }
 
   $args = shortcode_atts( array(
     'setter' => '',
-    'setter_publickey' => '',
     'property' => 'sigbro',
     'value' => 'silver',
-    'token' => ''
+    'redirect' => '/',
+    'network' => 'test',
   ), $attr );
 
+  if ( $account == "" ) {
+    $_redirect = $args['redirect'];
+
+    $msg = '<script type="text/javascript">
+      var redirect_url = "' . $_redirect . '";
+      window.location.replace(redirect_url);
+    </script>';
+    return $msg;
+  }
+
   $_setter = $args['setter'];
-  $_setter_publickey = $args['setter_publickey'];
   $_property = $args['property'];
   $_value = $args['value'];
-  $_token = $args['token'];
+  $_redirect = $args['redirect'];
+  $_network = $args['network'];
 
   $_validate = sigbro_validate_account_property($account, $_property, $_setter, $_value);
 
   if ( $_validate == true ) {
-    $msg = sprintf("<p style='text-align: center;'>Welcome, %s<br>Your account is valid!</p>", $account);
+    // all good, user valid
+    $msg = sprintf("");
   } else {
-    $prop_res = sigbro_set_account_property($account, $_property, $_setter_publickey, $_value, $_token);
-    if ( $prop_res == true ) {
-      $msg = sprintf("<p style='text-align: center;'>Welcome, %s<br>Your account is going to be valid soon!</p>", $account);
-    } else {
-      $msg = sprintf("<p style='text-align: center;'>Welcome, %s<br>Your need a Sigbro Blessing!</p>", $account);
-    }
+    $msg = '<script type="text/javascript">
+      var redirect_url = "' . $_redirect . '";
+      window.location.replace(redirect_url);
+    </script>';
   }
  
   return $msg;
 }
 
+// [sigbro-auth redirect="/securepage"]
 add_shortcode('sigbro-auth', 'sigbro_auth_shortcode');
 
 
-// [sigbro-property setter="ARDOR-H2W5-VZAB-9XFZ-38885" property="sigbro" value="silver" token="qwerty123"]
-add_shortcode('sigbro-property', 'sigbro_set_property');
+// [sigbro-property setter="ARDOR-H2W5-VZAB-9XFZ-38885" property="sigbro" value="silver" redirect="/transfer" network="main"]
+add_shortcode('sigbro-property', 'sigbro_validate_property');
 
 ?>
