@@ -3,7 +3,7 @@
 /*
 Plugin Name: Sigbro Auth 2.0
 Plugin URI: https://www.nxter.org/sigbro
-Version: 0.2.0
+Version: 0.2.1
 Author: scor2k
 Description: Use Sigbro Mobile app to log in to the site
 License: MIT
@@ -138,7 +138,7 @@ function sigbro_validate_property($attr) {
   $_redirect = $args['redirect'];
   $_network = $args['network'];
 
-  $_validate = sigbro_validate_account_property($account, $_property, $_setter, $_value);
+  $_validate = sigbro_validate_account_property($account, $_property, $_setter, $_value, $_network);
 
   if ( $_validate == true ) {
     // all good, user valid
