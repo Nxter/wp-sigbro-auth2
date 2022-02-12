@@ -3,7 +3,7 @@
 /*
 Plugin Name: Sigbro Auth 2.0
 Plugin URI: https://www.nxter.org/sigbro
-Version: 0.2.1
+Version: 0.3.0
 Author: scor2k
 Description: Use Sigbro Mobile app to log in to the site
 License: MIT
@@ -19,7 +19,6 @@ require_once 'phpqrcode.php';
 
 defined('ABSPATH') or die('No script kiddies please!');
 
-
 function sigbro_auth_shortcode($attr) {
   $this_is_new_qrcode = false;
 
@@ -32,7 +31,7 @@ function sigbro_auth_shortcode($attr) {
       $sigbro_url = "https://random.api.nxter.org/api/auth/new";
       $params = array('uuid' => $_SESSION["sigbro_auth_uuid"]);
 
-      // wait max 6 second (1 retry on the server side)
+      // wait max 6 second (include 1 retry on the server side)
       $result = sigbro_send_post_json($sigbro_url, $params, 6);
 
       if ( $result['result'] == 'fail' ) {
@@ -103,7 +102,6 @@ function sigbro_auth_shortcode($attr) {
       var data = JSON.stringify({"uuid": uuid});
       xhr.send(data);
     }
-  
   </script>';
 
   $msg = sprintf("%s\n%s", $png, $js);
@@ -111,53 +109,6 @@ function sigbro_auth_shortcode($attr) {
   return $msg;
 }
 
-function sigbro_validate_property($attr) {
-  $account = $_COOKIE["sigbro_auth_account"];
-
-  $args = shortcode_atts( array(
-    'setter' => '',
-    'property' => 'sigbro',
-    'value' => 'silver',
-    'redirect' => '/',
-    'network' => 'test',
-  ), $attr );
-
-  if ( $account == "" ) {
-    $_redirect = $args['redirect'];
-
-    $msg = '<script type="text/javascript">
-      var redirect_url = "' . $_redirect . '";
-      window.location.replace(redirect_url);
-    </script>';
-    return $msg;
-  }
-
-  $_setter = $args['setter'];
-  $_property = $args['property'];
-  $_value = $args['value'];
-  $_redirect = $args['redirect'];
-  $_network = $args['network'];
-
-  $_validate = sigbro_validate_account_property($account, $_property, $_setter, $_value, $_network);
-
-  if ( $_validate == true ) {
-    // all good, user valid
-    $msg = sprintf("");
-  } else {
-    $msg = '<script type="text/javascript">
-      var redirect_url = "' . $_redirect . '";
-      window.location.replace(redirect_url);
-    </script>';
-  }
- 
-  return $msg;
-}
-
 // [sigbro-auth redirect="/securepage"]
 add_shortcode('sigbro-auth', 'sigbro_auth_shortcode');
-
-
-// [sigbro-property setter="ARDOR-H2W5-VZAB-9XFZ-38885" property="sigbro" value="silver" redirect="/transfer" network="main"]
-add_shortcode('sigbro-property', 'sigbro_validate_property');
-
 ?>

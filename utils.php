@@ -1,35 +1,5 @@
 <?php 
 
-// validate Account Property -> return True if valid
-function sigbro_validate_account_property($account, $property, $setter, $value, $network = "main") {
-    $sigbro_ardor_url = "https://random.api.nxter.org/ardor";
-    if ( $network == "test" ) {
-        $sigbro_ardor_url = "https://random.api.nxter.org/tstardor";
-    }
-
-    // TODO: fix the issue with wrong params from the shortcut
-    $params = array(
-        'requestType' => 'getAccountProperties',
-        'recipient' => $account,
-        'property' => 'DoggInn', 
-        'setter' => $setter,
-    );
-		
-    $res = sigbro_send_post($sigbro_ardor_url, $params, 3);
-	
-	if ( isset($res["properties"]) ) {
-		$properties = $res["properties"];
-		foreach($properties as $item) { 
-			// TODO: fix the issue with wrong params from the shortcut
-			if ( $item["property"] == "DoggInn" && $item["value"] == "EntrancePass" ) {
-        		return true;
-    		}
-		}
-	}
-    
-    return false;
-}
-
 // send POST request
 function sigbro_send_post($url, $params, $timeout = 3) {
     $res = @file_get_contents($url, false, stream_context_create(array(
