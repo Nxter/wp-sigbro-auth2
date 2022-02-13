@@ -3,7 +3,7 @@
 /*
 Plugin Name: Sigbro Auth 2.0
 Plugin URI: https://www.nxter.org/sigbro
-Version: 0.4.0
+Version: 0.5.0
 Author: scor2k
 Description: Use Sigbro Mobile app to log in to the site
 License: MIT
@@ -131,9 +131,34 @@ function sigbro_auth_shortcode($attr) {
   return $msg;
 }
 
+function sigbro_auth_logout($attr) {
+    $args = shortcode_atts( array(
+        'redirect' => '/'
+      ), $attr );
+
+    $redirect_url = $args['redirect'];
+
+    $js_redirect = '<script type="text/javascript">
+            var redirect_url = "' . $redirect_url . '";
+            document.cookie = "sigbro_auth_account=; Max-Age=-99999999;";
+            window.location.replace(redirect_url);
+          </script>';
+
+    if ( isset($_COOKIE["sigbro_auth_account"]) ) {
+        return $js_redirect;
+    }
+    return "";
+}
+
+
+
 // [sigbro-auth redirect="/securepage"]
 add_shortcode('sigbro-auth', 'sigbro_auth_shortcode');
 
 // [sigbro-info redirect="/"]
 add_shortcode('sigbro-info', 'sigbro_auth_info');
+
+// [sigbro-logout redirect="/"]
+add_shortcode('sigbro-logout', 'sigbro_auth_logout');
+
 ?>

@@ -23,3 +23,7 @@ Profit!
 
 1. Insert shortcut `[sigbro-info redirect="/"]`. We will use redirect parameter for users without authorization.
 
+=== Logout ===
+
+1. Insert shortcut `[sigbro-logout redirect="/"]`.
+
