@@ -3,7 +3,7 @@
 /*
 Plugin Name: Sigbro Auth 2.0
 Plugin URI: https://www.nxter.org/sigbro
-Version: 0.3.1
+Version: 0.4.0
 Author: scor2k
 Description: Use Sigbro Mobile app to log in to the site
 License: MIT
@@ -18,6 +18,26 @@ require_once 'utils.php';
 require_once 'phpqrcode.php';
 
 defined('ABSPATH') or die('No script kiddies please!');
+
+function sigbro_auth_info($attr) {
+    $args = shortcode_atts( array(
+        'redirect' => '/'
+      ), $attr );
+
+
+    if ( isset($_COOKIE["sigbro_auth_account"]) ) {
+        return $_COOKIE["sigbro_auth_account"];
+    }
+
+    $redirect_url = $args['redirect'];
+
+    $js = '<script type="text/javascript">
+            var redirect_url = "' . $redirect_url . '";
+            window.location.replace(redirect_url);
+          </script>';
+
+    return $js;
+}
 
 function sigbro_auth_shortcode($attr) {
   $this_is_new_qrcode = false;
@@ -113,4 +133,7 @@ function sigbro_auth_shortcode($attr) {
 
 // [sigbro-auth redirect="/securepage"]
 add_shortcode('sigbro-auth', 'sigbro_auth_shortcode');
+
+// [sigbro-info redirect="/"]
+add_shortcode('sigbro-info', 'sigbro_auth_info');
 ?>

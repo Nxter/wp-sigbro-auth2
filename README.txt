@@ -19,4 +19,7 @@ The user won't have the access to the wordpress profile
 
 Profit!
 
-PS. You may use `$_COOKIE["sigbro_auth_account"]` to print your user's account.
+=== Print Account ===
+
+1. Insert shortcut `[sigbro-info redirect="/"]`. We will use redirect parameter for users without authorization.
+
