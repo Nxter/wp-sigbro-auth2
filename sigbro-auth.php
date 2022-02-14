@@ -3,7 +3,7 @@
 /*
 Plugin Name: Sigbro Auth 2.0
 Plugin URI: https://www.nxter.org/sigbro
-Version: 0.5.2
+Version: 0.5.3
 Author: scor2k
 Description: Use Sigbro Mobile app to log in to the site
 License: MIT
@@ -30,13 +30,8 @@ function sigbro_auth_info($attr) {
     }
 
     $redirect_url = $args['redirect'];
-
-    $js = '<script type="text/javascript">
-            var redirect_url = "' . $redirect_url . '";
-            window.location.replace(redirect_url);
-          </script>';
-
-    return $js;
+    wp_redirect($redirect_url);
+    exit;
 }
 
 function sigbro_auth_shortcode($attr) {
@@ -55,6 +50,7 @@ function sigbro_auth_shortcode($attr) {
       $result = sigbro_send_post_json($sigbro_url, $params, 6);
 
       if ( $result['result'] == 'fail' ) {
+        unset($_SESSION["sigbro_auth_uuid"]);
         $msg = sprintf("<p style='color: red; text-align:center;'>%s</p>", $result["msg"]);
         return $msg;
       }
@@ -137,6 +133,7 @@ function sigbro_auth_logout($attr) {
       ), $attr );
 
     $redirect_url = $args['redirect'];
+    unset($_SESSION["sigbro_auth_uuid"]);
 
     $js_redirect = '<script type="text/javascript">
             var redirect_url = "' . $redirect_url . '";
