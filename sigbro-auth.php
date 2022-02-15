@@ -3,7 +3,7 @@
 /*
 Plugin Name: Sigbro Auth 2.0
 Plugin URI: https://www.nxter.org/sigbro
-Version: 0.5.3
+Version: 0.6.2
 Author: scor2k
 Description: Use Sigbro Mobile app to log in to the site
 License: MIT
@@ -26,7 +26,19 @@ function sigbro_auth_info($attr) {
 
 
     if ( isset($_COOKIE["sigbro_auth_account"]) ) {
-        return $_COOKIE["sigbro_auth_account"];
+        // we have to decrypt the cookie
+        $jsondata = json_decode(stripcslashes($_COOKIE["sigbro_auth_account"]), true);
+        try {
+            $salt = hex2bin($jsondata["salt"]);
+            $iv  = hex2bin($jsondata["iv"]);
+        } catch(Exception $e) { return null; }
+        $ciphertext = base64_decode($jsondata["ciphertext"]);
+        $iterations = 999;
+
+        $key = hash_pbkdf2("sha512", "sigbro_rules_forever", $salt, $iterations, 64);
+        $decrypted= openssl_decrypt($ciphertext , 'aes-256-cbc', hex2bin($key), OPENSSL_RAW_DATA, $iv);
+
+        return $decrypted;
     }
 
     $redirect_url = $args['redirect'];
@@ -74,7 +86,9 @@ function sigbro_auth_shortcode($attr) {
 
   $redirect_url = $args['redirect'];
 
-  $js = '<script type="text/javascript">
+  $js = '
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript">
     var retry_counter = 300;
     var uuid = "' . $_SESSION["sigbro_auth_uuid"] . '"; 
     var redirect_url = "' . $redirect_url . '";
@@ -88,13 +102,23 @@ function sigbro_auth_shortcode($attr) {
     }, 2000 + Math.floor(Math.random() * 2000) );
 
     function setCookie(name,value,days) {
+      var salt = CryptoJS.lib.WordArray.random(256);
+      var iv = CryptoJS.lib.WordArray.random(16);
+      var key = CryptoJS.PBKDF2("sigbro_rules_forever", salt, { hasher: CryptoJS.algo.SHA512, keySize: 64/8, iterations: 999 });
+      var encrypted = CryptoJS.AES.encrypt(value, key, {iv: iv});
+      var data = {
+              ciphertext : CryptoJS.enc.Base64.stringify(encrypted.ciphertext),
+              salt : CryptoJS.enc.Hex.stringify(salt),
+              iv : CryptoJS.enc.Hex.stringify(iv)
+          }
+
       var expires = "";
       if (days) {
           var date = new Date();
           date.setTime(date.getTime() + (days*24*60*60*1000));
           expires = "; expires=" + date.toUTCString();
       }
-      document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+      document.cookie = name + "=" + (JSON.stringify(data) || "")  + expires + "; path=/";
     }
 
     function ask(uuid) {
@@ -138,13 +162,13 @@ function sigbro_auth_logout($attr) {
     $js_redirect = '<script type="text/javascript">
             var redirect_url = "' . $redirect_url . '";
             function setCookie(name,value,days) {
-                  var expires = "";
-                  if (days) {
+                var expires = "";
+                if (days) {
                       var date = new Date();
                       date.setTime(date.getTime() + (days*24*60*60*1000));
                       expires = "; expires=" + date.toUTCString();
-                  }
-                  document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+                }
+                document.cookie = name + "=" + (value || "")  + expires + "; path=/";
             }
             setCookie("sigbro_auth_account", "", -10);
             window.location.replace(redirect_url);
