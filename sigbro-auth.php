@@ -3,7 +3,7 @@
 /*
 Plugin Name: Sigbro Auth 2.0
 Plugin URI: https://www.nxter.org/sigbro
-Version: 0.6.2
+Version: 0.6.3
 Author: scor2k
 Description: Use Sigbro Mobile app to log in to the site
 License: MIT
@@ -24,7 +24,6 @@ function sigbro_auth_info($attr) {
         'redirect' => '/'
       ), $attr );
 
-
     if ( isset($_COOKIE["sigbro_auth_account"]) ) {
         // we have to decrypt the cookie
         $jsondata = json_decode(stripcslashes($_COOKIE["sigbro_auth_account"]), true);
@@ -42,12 +41,33 @@ function sigbro_auth_info($attr) {
     }
 
     $redirect_url = $args['redirect'];
-    wp_redirect($redirect_url);
-    exit;
+    $js = '<script type="text/javascript">
+        var redirect_url = "' . $redirect_url . '";
+        console.log("Redirect URL: ", redirect_url);
+        window.location.replace(redirect_url);
+      </script>';
+
+    return $js;
 }
 
 function sigbro_auth_shortcode($attr) {
   $this_is_new_qrcode = false;
+
+  $args = shortcode_atts( array(
+    'redirect' => '/sigbro'
+  ), $attr );
+
+  $redirect_url = $args['redirect'];
+
+  if ( isset($_COOKIE["sigbro_auth_account"]) ) {
+    $js = '<script type="text/javascript">
+        var redirect_url = "' . $redirect_url . '";
+        console.log("Redirect URL: ", redirect_url);
+        window.location.replace(redirect_url);
+      </script>';
+
+    return $js;
+  }
 
   if  ( !isset($_SESSION["sigbro_auth_uuid"]) ) {
     $_SESSION["sigbro_auth_uuid"] = sigbro_generate_uuid();
@@ -68,9 +88,7 @@ function sigbro_auth_shortcode($attr) {
       }
   }
 
-  $args = shortcode_atts( array(
-    'redirect' => '/sigbro'
-  ), $attr );
+  
 
   // generate URL for the Sigbro App
   $url = sprintf("https://dl.sigbro.com/auth/%s/", $_SESSION["sigbro_auth_uuid"]);
@@ -84,7 +102,7 @@ function sigbro_auth_shortcode($attr) {
   // prepare base64 image
   $png = sprintf("<p style='text-align: center;'><img src='data:image/png;base64,%s'/></p>", base64_encode($qrcode));
 
-  $redirect_url = $args['redirect'];
+  
 
   $js = '
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
