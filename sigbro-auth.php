@@ -3,7 +3,7 @@
 /*
 Plugin Name: Sigbro Auth 2.0
 Plugin URI: https://www.nxter.org/sigbro
-Version: 0.8.0
+Version: 0.8.2
 Author: scor2k
 Description: Use Sigbro Mobile app to log in to the site
 License: MIT
@@ -37,6 +37,8 @@ function sigbro_auth_info($attr) {
         $key = hash_pbkdf2("sha512", "sigbro_rules_forever", $salt, $iterations, 64);
         $decrypted= openssl_decrypt($ciphertext , 'aes-256-cbc', hex2bin($key), OPENSSL_RAW_DATA, $iv);
 
+        var_dump(get_usermeta(1));
+
         return $decrypted;
     }
 
@@ -46,6 +48,8 @@ function sigbro_auth_info($attr) {
         console.log("Redirect URL: ", redirect_url);
         window.location.replace(redirect_url);
       </script>';
+
+
 
     return $js;
 }
@@ -101,6 +105,7 @@ function sigbro_auth_shortcode($attr) {
 
   // prepare base64 image
   $png = sprintf("<p style='text-align: center;'><img src='data:image/png;base64,%s'/></p>", base64_encode($qrcode));
+  $deeplink = "<p style='text-align: center;'><a href='" . $url . "' target=_blank>" . $url . "</a></p>";
 
   
 
@@ -164,7 +169,7 @@ function sigbro_auth_shortcode($attr) {
     }
   </script>';
 
-  $msg = sprintf("%s\n%s", $png, $js);
+  $msg = $png . $deeplink . $js;
 
   return $msg;
 }
@@ -194,25 +199,6 @@ function sigbro_auth_logout($attr) {
 
     return $js_redirect;
 }
-
-add_filter( 'pre_get_document_title', function( $title ){
-    if ( isset($_COOKIE["sigbro_auth_account"]) ) {
-            // we have to decrypt the cookie
-            $jsondata = json_decode(stripcslashes($_COOKIE["sigbro_auth_account"]), true);
-            try {
-                $salt = hex2bin($jsondata["salt"]);
-                $iv  = hex2bin($jsondata["iv"]);
-            } catch(Exception $e) { return null; }
-            $ciphertext = base64_decode($jsondata["ciphertext"]);
-            $iterations = 999;
-
-            $key = hash_pbkdf2("sha512", "sigbro_rules_forever", $salt, $iterations, 64);
-            $decrypted= openssl_decrypt($ciphertext , 'aes-256-cbc', hex2bin($key), OPENSSL_RAW_DATA, $iv);
-
-            return $decrypted;
-    }
-    return $title;
-}, 999, 1 );
 
 // [sigbro-auth redirect="/securepage"]
 add_shortcode('sigbro-auth', 'sigbro_auth_shortcode');
