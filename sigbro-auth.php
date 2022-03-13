@@ -3,7 +3,7 @@
 /*
 Plugin Name: Sigbro Auth 2.0
 Plugin URI: https://www.nxter.org/sigbro
-Version: 0.8.2
+Version: 0.8.3
 Author: scor2k
 Description: Use Sigbro Mobile app to log in to the site
 License: MIT
@@ -36,8 +36,6 @@ function sigbro_auth_info($attr) {
 
         $key = hash_pbkdf2("sha512", "sigbro_rules_forever", $salt, $iterations, 64);
         $decrypted= openssl_decrypt($ciphertext , 'aes-256-cbc', hex2bin($key), OPENSSL_RAW_DATA, $iv);
-
-        var_dump(get_usermeta(1));
 
         return $decrypted;
     }
@@ -138,7 +136,7 @@ function sigbro_auth_shortcode($attr) {
       var expires = "";
       if (days) {
           var date = new Date();
-          date.setTime(date.getTime() + (days*24*60*60*1000));
+          date.setTime(date.getTime() + (days*60*60*1000));
           expires = "; expires=" + date.toUTCString();
       }
       document.cookie = name + "=" + (JSON.stringify(data) || "")  + expires + "; path=/";
@@ -158,7 +156,7 @@ function sigbro_auth_shortcode($attr) {
                  clearInterval(retry);
                  console.log(result);
                  // save cookie for a month
-                 setCookie("sigbro_auth_account", result.accountRS, 30);
+                 setCookie("sigbro_auth_account", result.accountRS, 3);
                  window.location.replace(redirect_url);
                }
             }
@@ -188,7 +186,7 @@ function sigbro_auth_logout($attr) {
                 var expires = "";
                 if (days) {
                       var date = new Date();
-                      date.setTime(date.getTime() + (days*24*60*60*1000));
+                      date.setTime(date.getTime() + (days*60*60*1000));
                       expires = "; expires=" + date.toUTCString();
                 }
                 document.cookie = name + "=" + (value || "")  + expires + "; path=/";
